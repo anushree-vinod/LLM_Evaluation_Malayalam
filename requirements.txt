@@ -1,0 +1,9 @@
+sentencepiece
+transformers 
+datasets 
+sacrebleu 
+rouge_score 
+indic-nlp-library
+evaluate
+huggingface_hub
+accelerate

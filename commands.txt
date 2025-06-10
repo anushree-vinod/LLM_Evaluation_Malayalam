@@ -1,0 +1,7 @@
+nvidia-smi   --> see gpu state and processes
+ps -fp PID   --> see full path of process PID
+kill -9 PID  --> kill the procecss PID
+
+
+# Change device tp cuda:1 or cuda:0 depending on whichever has more free memory.
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
