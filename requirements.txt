@@ -7,3 +7,4 @@ indic-nlp-library
 evaluate
 huggingface_hub
 accelerate
+torch
