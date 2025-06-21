@@ -2,6 +2,7 @@ sentencepiece
 transformers 
 datasets 
 sacrebleu 
+bertscore
 rouge_score 
 indic-nlp-library
 evaluate
