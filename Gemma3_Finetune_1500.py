@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, TrainingArguments, Gemma3ForCausalLM
 from trl import SFTTrainer
 from peft import LoraConfig
 from datasets import load_dataset
+import torch
 
 def custom_prompt(example):
     text = example["input"]
@@ -42,7 +43,8 @@ if __name__ == '__main__':
     tokenizer.padding_side = "right"
 
     # Load the Gemma 3 model
-    model = Gemma3ForCausalLM.from_pretrained(model_name, device_map="cuda:0")
+    model = Gemma3ForCausalLM.from_pretrained(model_name, device_map="cuda:0", torch_dtype=torch.bfloat16)
+    model.gradient_checkpointing_enable()
     model.config.use_cache = False  # Disable caching for training
 
     # Set up LoRA configuration for causal language modeling
@@ -65,6 +67,7 @@ if __name__ == '__main__':
         save_steps=25,
         report_to="tensorboard",
         group_by_length=True,
+        bf16=True,
     )
 
     # Create the SFTTrainer with LoRA parameters
