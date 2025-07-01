@@ -6,7 +6,15 @@ from itertools import product
 import evaluate
 import torch
 import pandas as pd
+import numpy as np
 import os
+import gc
+
+from transformers.utils import logging as t_logging
+
+t_logging.set_verbosity_error()
+
+os.environ["TORCHDYNAMO_DISABLE"] = "1"
 
 def custom_prompt(example):
     text = example["input"]
@@ -21,16 +29,18 @@ Important:
 - Start your output with: Headline:"""
     return {"prompt": prompt, "completion": " " + example["target"]}
 
-def generate_headlines(trainer, dataset, tokenizer, max_samples=20):
-    inputs = dataset["prompt"][:max_samples]
-    generated, references = [], []
-    model = trainer.model
+def generate_headlines_inference(model, dataset, tokenizer):
     model.eval()
 
-    for input_text, ref in zip(inputs, dataset["completion"][:max_samples]):
-        input_ids = tokenizer(input_text, return_tensors="pt", truncation=True).input_ids.cuda()
+    generated, references = [], []
+    inputs = dataset["prompt"]
+
+    for input_text, ref in zip(inputs, dataset["completion"]):
+        input_ids = tokenizer(input_text, return_tensors="pt", truncation=True).input_ids.to("cuda:0")
+
         with torch.no_grad():
-            output = model.generate(input_ids, max_new_tokens=40, do_sample=False)
+            output = model.generate(input_ids, max_new_tokens=100, do_sample=False)
+
         decoded = tokenizer.decode(output[0], skip_special_tokens=True)
         pred = decoded.split("Headline:")[-1].strip()
         generated.append(pred)
@@ -38,10 +48,12 @@ def generate_headlines(trainer, dataset, tokenizer, max_samples=20):
 
     return generated, references
 
+
+
 if __name__ == '__main__':
     df = load_dataset("ai4bharat/IndicHeadlineGeneration", "ml")
-    train_dataset = df["train"].shuffle(seed=42).select(range(200))
-    val_dataset = df["test"].shuffle(seed=42).select(range(20))
+    train_dataset = df["train"].shuffle(seed=42).select(range(1000))
+    val_dataset = df["test"].shuffle(seed=42).select(range(100))
 
     train_dataset = train_dataset.map(custom_prompt, remove_columns=["input", "target"])
     val_dataset = val_dataset.map(custom_prompt, remove_columns=["input", "target"])
@@ -62,8 +74,8 @@ if __name__ == '__main__':
 
     rouge = evaluate.load("rouge")
 
-    learning_rates = [5e-5, 2e-4]
-    lr_scheduler_types = ["linear", "cosine", "constant"]
+    learning_rates = np.logspace(-5, -2, num=8)
+    lr_scheduler_types = ["linear", "cosine"]
     weight_decays = [0.01, 0.05, 0.1]
 
     results_log = []
@@ -73,7 +85,7 @@ if __name__ == '__main__':
         lr_scheduler_types,
         weight_decays
     ):
-        trial_id = f"lr{lr}_sched-{scheduler}_wd{wd}"
+        trial_id = f"lr{lr}_sched{scheduler}_wd{wd}"
 
         model = Gemma3ForCausalLM.from_pretrained(
             model_name,
@@ -87,15 +99,15 @@ if __name__ == '__main__':
             output_dir=f"./results/{trial_id}",
             num_train_epochs=1,
             lr_scheduler_type=scheduler,
-            max_steps=200,
             per_device_train_batch_size=1,
+            gradient_accumulation_steps = 4,
             learning_rate=lr,
             weight_decay=wd,
             bf16=True,
             logging_steps=10,
             save_steps=1000,
             report_to="none",
-            group_by_length=True,
+            group_by_length=True
         )
 
         trainer = SFTTrainer(
@@ -108,7 +120,8 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        preds, refs = generate_headlines(trainer, val_dataset, tokenizer)
+        preds, refs = generate_headlines_inference(model, val_dataset, tokenizer)
+
         rouge_result = rouge.compute(predictions=preds, references=refs)
 
         result_row = {
@@ -120,6 +133,19 @@ if __name__ == '__main__':
         }
         results_log.append(result_row)
 
+        # Delete model and trainer objects
+        del model
+        del trainer
+
+        # Empty CUDA cache
+        torch.cuda.empty_cache()
+
+        # Collect garbage
+        gc.collect()
+
+        print('-' * 50)
+        print(f"Completed: {trial_id}")
+
     df_log = pd.DataFrame(results_log)
     os.makedirs("logs", exist_ok=True)
     df_log.to_csv("logs/tuning_results.csv", index=False)
@@ -129,7 +155,7 @@ if __name__ == '__main__':
 
     # Sort by ROUGE-L (descending) and mark best trial
     df_log = df_log.sort_values(by="rougeL", ascending=False).reset_index(drop=True)
-    df_log["best"] = ["✅" if i == 0 else "" for i in range(len(df_log))]
+    # df_log["best"] = ["Best: " if i == 0 else "" for i in range(len(df_log))]
 
     # Save to file
     os.makedirs("logs", exist_ok=True)

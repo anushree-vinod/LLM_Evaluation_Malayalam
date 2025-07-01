@@ -2,3 +2,4 @@ venv
 finetuned_models
 gemma3_malayalam_headlines
 results
+optuna_trial
