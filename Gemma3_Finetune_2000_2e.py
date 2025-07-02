@@ -43,7 +43,7 @@ if __name__ == '__main__':
     tokenizer.padding_side = "right"
 
     # Load the Gemma 3 model
-    model = Gemma3ForCausalLM.from_pretrained(model_name, device_map="cuda:0", torch_dtype=torch.bfloat16)
+    model = Gemma3ForCausalLM.from_pretrained(model_name, device_map="cuda:1", torch_dtype=torch.bfloat16)
     model.gradient_checkpointing_enable()
     model.config.use_cache = False  # Disable caching for training
 

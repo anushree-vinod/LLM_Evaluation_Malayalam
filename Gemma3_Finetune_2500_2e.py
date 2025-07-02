@@ -3,6 +3,9 @@ from trl import SFTTrainer
 from peft import LoraConfig
 from datasets import load_dataset
 import torch
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def custom_prompt(example):
     text = example["input"]
@@ -25,7 +28,7 @@ if __name__ == '__main__':
     df = load_dataset("ai4bharat/IndicHeadlineGeneration", "ml")
 
     # Shuffle and select 1000 samples from the training set
-    train_dataset = df["train"].shuffle(seed=42).select(range(2000))
+    train_dataset = df["train"].shuffle(seed=42).select(range(2500))
 
     # Shuffle and select 300 samples from the test set
     test_dataset = df["test"].select(range(300))

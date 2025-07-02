@@ -25,7 +25,7 @@ if __name__ == '__main__':
     df = load_dataset("ai4bharat/IndicHeadlineGeneration", "ml")
 
     # Shuffle and select 1000 samples from the training set
-    train_dataset = df["train"].shuffle(seed=42).select(range(2000))
+    train_dataset = df["train"].shuffle(seed=42).select(range(3000))
 
     # Shuffle and select 300 samples from the test set
     test_dataset = df["test"].select(range(300))
