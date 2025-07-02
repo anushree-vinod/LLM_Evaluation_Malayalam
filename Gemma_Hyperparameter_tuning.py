@@ -15,6 +15,7 @@ from transformers.utils import logging as t_logging
 t_logging.set_verbosity_error()
 
 os.environ["TORCHDYNAMO_DISABLE"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def custom_prompt(example):
     text = example["input"]

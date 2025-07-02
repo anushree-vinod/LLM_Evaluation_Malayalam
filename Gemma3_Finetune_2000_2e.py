@@ -83,4 +83,4 @@ if __name__ == '__main__':
     trainer.train()
 
     # Save the fine-tuned model
-    trainer.save_model("finetuned_models/gemma3_finetuned_2000")
+    trainer.save_model("finetuned_models/gemma3_finetuned_2000_2e-4")

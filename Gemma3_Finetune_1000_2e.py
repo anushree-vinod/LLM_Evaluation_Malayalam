@@ -60,9 +60,7 @@ if __name__ == '__main__':
         output_dir="./results",
         num_train_epochs=1,
         per_device_train_batch_size=1,
-        learning_rate=1.4e-3,
-        weight_decay=0.001,     
-        lr_scheduler_type="linear", 
+        learning_rate=2e-4,
         logging_steps=1,
         save_steps=25,
         report_to="tensorboard",
@@ -83,4 +81,4 @@ if __name__ == '__main__':
     trainer.train()
 
     # Save the fine-tuned model
-    trainer.save_model("finetuned_models/gemma3_finetuned")
+    trainer.save_model("finetuned_models/gemma3_finetuned_2e-4")
