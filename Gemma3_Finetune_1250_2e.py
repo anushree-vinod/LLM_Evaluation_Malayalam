@@ -2,10 +2,7 @@ from transformers import AutoTokenizer, TrainingArguments, Gemma3ForCausalLM
 from trl import SFTTrainer
 from peft import LoraConfig
 from datasets import load_dataset
-import torch
-import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def custom_prompt(example):
     text = example["input"]
     prompt = f"""
@@ -27,7 +24,7 @@ if __name__ == '__main__':
     df = load_dataset("ai4bharat/IndicHeadlineGeneration", "ml")
 
     # Shuffle and select 1000 samples from the training set
-    train_dataset = df["train"].shuffle(seed=42).select(range(1500))
+    train_dataset = df["train"].shuffle(seed=42).select(range(1250))
 
     # Shuffle and select 300 samples from the test set
     test_dataset = df["test"].select(range(300))
@@ -45,8 +42,7 @@ if __name__ == '__main__':
     tokenizer.padding_side = "right"
 
     # Load the Gemma 3 model
-    model = Gemma3ForCausalLM.from_pretrained(model_name, device_map="cuda:0", torch_dtype=torch.bfloat16)
-    model.gradient_checkpointing_enable()
+    model = Gemma3ForCausalLM.from_pretrained(model_name, device_map="cuda:0")
     model.config.use_cache = False  # Disable caching for training
 
     # Set up LoRA configuration for causal language modeling
@@ -64,9 +60,7 @@ if __name__ == '__main__':
         output_dir="./results",
         num_train_epochs=1,
         per_device_train_batch_size=1,
-        learning_rate=1.4e-3,
-        weight_decay=0.001,     
-        lr_scheduler_type="linear",
+        learning_rate=2e-4,
         logging_steps=1,
         save_steps=25,
         report_to="tensorboard",
@@ -87,4 +81,4 @@ if __name__ == '__main__':
     trainer.train()
 
     # Save the fine-tuned model
-    trainer.save_model("finetuned_models/gemma3_finetuned_1500")
+    trainer.save_model("finetuned_models/gemma3_finetuned_1250_2e-4")

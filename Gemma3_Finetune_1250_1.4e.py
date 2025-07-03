@@ -27,7 +27,7 @@ if __name__ == '__main__':
     df = load_dataset("ai4bharat/IndicHeadlineGeneration", "ml")
 
     # Shuffle and select 1000 samples from the training set
-    train_dataset = df["train"].shuffle(seed=42).select(range(1500))
+    train_dataset = df["train"].shuffle(seed=42).select(range(1250))
 
     # Shuffle and select 300 samples from the test set
     test_dataset = df["test"].select(range(300))
@@ -87,4 +87,4 @@ if __name__ == '__main__':
     trainer.train()
 
     # Save the fine-tuned model
-    trainer.save_model("finetuned_models/gemma3_finetuned_1500")
+    trainer.save_model("finetuned_models/gemma3_finetuned_1250_1.4e-3")
