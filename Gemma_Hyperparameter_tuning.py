@@ -75,9 +75,9 @@ if __name__ == '__main__':
 
     rouge = evaluate.load("rouge")
 
-    learning_rates = np.logspace(-5, -2, num=8)
+    learning_rates = [1e-4, 1.5e-4, 2e-4, 2.5e-4, 3e-4]
     lr_scheduler_types = ["linear", "cosine"]
-    weight_decays = [0.01, 0.05, 0.1]
+    weight_decays = [0.0, 0.01, 0.05]
 
     results_log = []
     
