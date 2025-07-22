@@ -65,6 +65,8 @@ if __name__ == '__main__':
         num_train_epochs=1,
         per_device_train_batch_size=1,
         learning_rate=2e-4,
+        weight_decay=0,     
+        lr_scheduler_type="linear",
         logging_steps=1,
         save_steps=25,
         report_to="tensorboard",
